@@ -45,6 +45,13 @@ steps:
     arguments: '--no-restore --configuration $(buildConfiguration)'
     projects: '**/*.csproj'
 
+- task: DotNetCoreCLi@2
+  displayName: 'Install .NET Core tootls from local manifest'
+  inputs:
+    command: custom
+    custom: tootls
+    arguments: 'restore'
+
 - task: DotNetCoreCLI@2
   displayName: 'Run unit tests - $(buildConfiguration)'
   inputs:
@@ -52,6 +59,19 @@ steps:
     arguments: '--no-build --configuration $(buildConfiguration)'
     publishTestResults: true
     projects: '**/*.Tests.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Create code coverage report'
+  inputs:
+    command: custom
+    custom: tootl
+    arguments: 'run reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml - targetdir:$(Build.SourcesDirectory)/CodeCoverage --reporttypes:HtmlInline_AzurePipelines'
+
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish code coverage report'
+  inputs:
+    codeCoverageTool: 'cobertura'
+    summaryFileLocation: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml'
 
 - task: DotNetCoreCLI@2
   displayName: 'Publish the project - $(buildConfiguration)'
